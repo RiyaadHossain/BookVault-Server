@@ -17,67 +17,74 @@ const client = new MongoClient(process.env.MONGODB_URI, {
 
 const run = async () => {
   try {
-    const db = client.db('Tech-Net');
-    const productCollection = db.collection('products');
+    const db = client.db('BookVault');
+    const bookCollection = db.collection('books');
 
-    app.get('/products', async (req, res) => {
-      const cursor = productCollection.find({});
-      const product = await cursor.toArray();
+    app.get('/books', async (req, res) => {
+      const cursor = bookCollection.find({});
+      const book = await cursor.toArray();
 
-      res.send({ status: true, data: product });
+      res.send({ status: true, data: book });
     });
 
-    app.post('/product', async (req, res) => {
-      const product = req.body;
+    app.post('/book', async (req, res) => {
+      const book = req.body;
 
-      const result = await productCollection.insertOne(product);
+      const result = await bookCollection.insertOne(book);
 
       res.send(result);
     });
 
-    app.get('/product/:id', async (req, res) => {
+    app.get('/book/:id', async (req, res) => {
       const id = req.params.id;
-      const result = await productCollection.findOne({ _id: ObjectId(id) });
+      const result = await bookCollection.findOne({ _id: ObjectId(id) });
       res.send(result);
     });
 
-    app.delete('/product/:id', async (req, res) => {
+    app.patch('/book/:id', async (req, res) => {
+      const id = req.params.id;
+      const updatedData = req.body
+      const result = await bookCollection.findOneAndUpdate({ _id: ObjectId(id) }, updatedData);
+      res.send(result);
+    });
+
+    app.delete('/book/:id', async (req, res) => {
       const id = req.params.id;
 
-      const result = await productCollection.deleteOne({ _id: ObjectId(id) });
+      const result = await bookCollection.deleteOne({ _id: ObjectId(id) });
       res.send(result);
     });
 
-    app.post('/comment/:id', async (req, res) => {
-      const productId = req.params.id;
-      const comment = req.body.comment;
+    app.post('/review/:id', async (req, res) => {
+      const bookId = req.params.id;
+      const review = req.body.review;
 
-      const result = await productCollection.updateOne(
-        { _id: ObjectId(productId) },
-        { $push: { comments: comment } }
+      const result = await bookCollection.updateOne(
+        { _id: ObjectId(bookId) },
+        { $push: { reviews: review } }
       );
 
 
       if (result.modifiedCount !== 1) {
-        res.json({ error: 'Product not found or comment not added' });
+        res.json({ error: 'Book not found or review not added' });
         return;
       }
 
-      res.json({ message: 'Comment added successfully' });
+      res.json({ message: 'Review added successfully' });
     });
 
-    app.get('/comment/:id', async (req, res) => {
-      const productId = req.params.id;
+    app.get('/review/:id', async (req, res) => {
+      const bookId = req.params.id;
 
-      const result = await productCollection.findOne(
-        { _id: ObjectId(productId) },
-        { projection: { _id: 0, comments: 1 } }
+      const result = await bookCollection.findOne(
+        { _id: ObjectId(bookId) },
+        { projection: { _id: 0, reviews: 1 } }
       );
 
       if (result) {
         res.json(result);
       } else {
-        res.status(404).json({ error: 'Product not found' });
+        res.status(404).json({ error: 'Book not found' });
       }
     });
 
